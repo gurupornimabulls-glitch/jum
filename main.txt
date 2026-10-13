@@ -1,3 +1,76 @@
+monte carlo prediction
+def value_fn_estimate(env,episodes,gamma = 1.0):
+  num_states = env.observation_space.n
+  num_actions = env.action_space.n
+  V_pi = np.zeros(num_states)
+
+  Q_pi = np.zeros((num_states,num_actions))
+  returns_V = {s:[] for s in range(num_states)}
+  returns_Q = {(s,a):[] for s in range(num_states) for a in range(num_actions)}
+  for episode in episodes:
+    states = episode["states"]
+    actions = episode["actions"]
+    rewards = episode["rewards"]
+    T = len(rewards)
+    G = 0.0
+    returns=np.zeros(T)
+    for t in reversed(range(T)):
+      G = rewards[t]+gamma*G
+      returns[t]=G
+    visited_states,visited_actions = set(),set()
+    for t in range(T):
+      s,a = states[t],actions[t]
+      if s not in visited_states:
+        visited_states.add(s)
+        returns_V[t].append(returns[t])
+      if (s,a) not in visited_actions:
+        visited_actions.add((s,a))
+        returns_Q[(s,a)].append(returns[t])
+  for s in range(num_states):
+    if len(returns_V[s])>0:
+      V_pi[s]=np.mean(returns_V[s])
+    for a in range(num_actions):
+      if len(returns_Q[(s,a)]):
+        Q_pi[(s,a)]=np.mean(returns_Q[(s,a)])
+  return V_pi,Q_pi
+
+
+-----
+def choose_action(Q,s,epsilon):
+  u = np.random.uniform(0,1)
+  num_actions = Q.shape[1]
+  if u<1-epsilon:
+    return np.argmax(Q[s,:])
+  else:
+    return np.random.choice(num_actions)
+def sarsa(env,gamma,alpha,epsilon_start,epsilon_min,decay_rate,N):
+  num_states = env.observation_space.n
+  num_actions = env.action_space.n
+  Q = np.zeros((num_states,num_actions))
+  epsilon = epsilon_start
+  for epoch in range(N):
+    state,info = env.reset()
+    episode_over = False
+    a = choose_action(Q, s, epsilon)
+    while not episode_over:
+      next_state,reward,terminated,truncated,_=env.step(a)
+      if truncated or terminated:
+        episode_over = True
+        G = reward
+      else:
+        next_action = choose_action(Q,next_state,epsilon) 
+        G = reward + gamma*Q[next_state,next_action]
+      Q[state,a]=Q[state,a]+alpha*(G-Q[next_state,next_action])
+      if not episode_over:
+              s = snext
+              a = anext
+      epsilon = max(epsilon_min, epsilon * decay_rate)
+  a_opt = np.argmax(Q, axis=1)
+  pi = np.zeros((n_actions, n_states))
+  pi[a_opt, np.arange(n_states)] = 1.0
+  return pi
+
+---
 def q_learning(env,gamma,aplha,epsilon_start,epsilon_min,decay_rate,N):
   no_s = env.observation_space.n
   no_a = env.observation_space.n
@@ -26,5 +99,6 @@ def q_learning(env,gamma,aplha,epsilon_start,epsilon_min,decay_rate,N):
 env = gym.make('FrozenLake-v1',is_slippery=False)
 pi_ql = q_learning(env, gamma=0.99, alpha=0.1, epsilon_start=1.0,
                    epsilon_min=0.01, decay_rate=0.9995, N=20000)
+
 
 

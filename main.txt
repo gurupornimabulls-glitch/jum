@@ -1,3 +1,30 @@
-hello
-i love py
-sdvsfvdfsvdvdvdv
+def q_learning(env,gamma,aplha,epsilon_start,epsilon_min,decay_rate,N):
+  no_s = env.observation_space.n
+  no_a = env.observation_space.n
+  Q=np.zeros((no_s,no_a))
+  epsilon = epsilon_start
+  for epoch in range(N):
+    s,_ = env.reset()
+    done = False
+    while not done:
+      a = choose_action_eps_greedy(Q,epsilon,state):
+      ns,r,,terminated,truncated,_ = env.step(a)
+      done = terminated or truncated
+      if done:
+        G=r
+      else:
+        G=r+gamma*np.max(Q[(ns,:)])
+      Q[(s,a)]+=alpha*(G-Q[s,a])
+      if not done:
+        s = ns
+    epsilon= max(epsilon_min,decay_rate*epsilon)
+  
+    a_opt = np.argmax(Q,axis=1)
+    pi = np.zeros((no_a,no_s))
+    pi[a_opt,np.arrange(n_states)]=1.0
+    return pi
+env = gym.make('FrozenLake-v1',is_slippery=False)
+pi_ql = q_learning(env, gamma=0.99, alpha=0.1, epsilon_start=1.0,
+                   epsilon_min=0.01, decay_rate=0.9995, N=20000)
+
+
